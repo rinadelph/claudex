@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# Enhanced claudex script - runs Claude in tmux session named after current folder
+# Usage: claudex [session_suffix] [claude_args...]
+
+claudex_main() {
+    local base_name session_name session_suffix
+    base_name=$(basename "$PWD" | tr '.' '_' | tr ' ' '_')
+    
+    # Check if first argument is a session suffix or special flags that should create new sessions
+    if [ $# -gt 0 ] && ([[ "$1" != -* ]] || [[ "$1" == "-c" ]] || [[ "$1" == "-r" ]] || [[ "$1" == "--continue" ]] || [[ "$1" == "--resume" ]]); then
+        if [[ "$1" == "-c" ]] || [[ "$1" == "--continue" ]]; then
+            session_suffix="continue"
+        elif [[ "$1" == "-r" ]] || [[ "$1" == "--resume" ]]; then
+            session_suffix="resume"
+        else
+            session_suffix="$1"
+            shift  # Remove the suffix from arguments to pass to claude
+        fi
+        session_name="${base_name}_${session_suffix}"
+    else
+        session_name="$base_name"
+    fi
+    
+    # Check if tmux is available
+    if ! command -v tmux &> /dev/null; then
+        echo "tmux is not installed. Running claude directly..."
+        claude --dangerously-skip-permissions "$@"
+        return
+    fi
+    
+    # Check if we're already in a tmux session
+    if [ -n "$TMUX" ]; then
+        echo "Already in tmux session. Running claude directly..."
+        claude --dangerously-skip-permissions "$@"
+        return
+    fi
+    
+    # Show existing sessions for this folder if any exist
+    local existing_sessions
+    existing_sessions=$(tmux list-sessions 2>/dev/null | grep "^${base_name}" | cut -d: -f1 || true)
+    if [ -n "$existing_sessions" ]; then
+        echo "Existing sessions for this folder:"
+        echo "$existing_sessions" | sed 's/^/  /'
+        echo ""
+    fi
+    
+    # Check if session exists
+    if tmux has-session -t "$session_name" 2>/dev/null; then
+        echo "Existing session found: $session_name"
+        echo "To attach manually: tmux attach-session -t $session_name"
+        if [ -t 0 ] && [ -t 1 ]; then
+            echo "Attaching to session..."
+            tmux attach-session -t "$session_name"
+        else
+            echo "⚠️  Cannot auto-attach in this environment. Use: tmux attach-session -t $session_name"
+        fi
+    else
+        echo "Creating new tmux session: $session_name"
+        tmux new-session -d -s "$session_name" -c "$PWD"
+        tmux send-keys -t "$session_name" "claude --dangerously-skip-permissions $*" Enter
+        echo "✅ Session '$session_name' created with Claude running!"
+        echo "To attach: tmux attach-session -t $session_name"
+        if [ -t 0 ] && [ -t 1 ]; then
+            echo "Attempting to attach..."
+            tmux attach-session -t "$session_name" 2>/dev/null || echo "Auto-attach failed. Use the command above."
+        fi
+    fi
+}
+
+# Run the main function with all arguments
+claudex_main "$@"
