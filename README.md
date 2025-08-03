@@ -13,6 +13,24 @@ A powerful wrapper for the Claude CLI that automatically manages tmux sessions, 
 - **Development-ready** - Pre-configured tmux with shortcuts for coding workflows
 - **Zero configuration** - Works out of the box with sensible defaults
 
+## 🎬 Demo
+
+```bash
+# Start Claude for your project
+$ cd my-awesome-project
+$ claudex
+✅ Session 'my-awesome-project' created with Claude running!
+
+# In another terminal, start a dev session
+$ claudex dev
+✅ Session 'my-awesome-project_dev' created with Claude running!
+
+# List your sessions
+$ tmux list-sessions
+my-awesome-project: 1 windows (created Thu Jan  1 12:00:00 2025)
+my-awesome-project_dev: 1 windows (created Thu Jan  1 12:01:00 2025)
+```
+
 ## Features
 
 - 🚀 **Auto-session management**: Creates tmux sessions named after your current folder
@@ -25,7 +43,7 @@ A powerful wrapper for the Claude CLI that automatically manages tmux sessions, 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/claudex.git
+git clone https://github.com/rinadelph/claudex.git
 cd claudex
 
 # Run the installer
@@ -34,7 +52,7 @@ cd claudex
 
 ### One-line Install
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/claudex/main/install-claudex.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rinadelph/claudex/master/install-claudex.sh | bash
 ```
 
 ## Manual Installation
